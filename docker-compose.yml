@@ -1,40 +1,39 @@
-services:
-  unbound:
-    container_name: unbound
-    image: mvance/unbound:latest
-    restart: unless-stopped
-    networks:
-      pihole_net:
-        ipv4_address: 172.18.0.2
-    volumes:
-      - ./unbound/unbound.conf:/opt/unbound/etc/unbound/unbound.conf:ro
+version: "3.9"
 
+services:
   pihole:
     container_name: pihole
     image: pihole/pihole:latest
-    depends_on:
-      - unbound
-    restart: unless-stopped
-    networks:
-      pihole_net:
-        ipv4_address: 172.18.0.3
+    environment:
+      TZ: 'America/New_York'
+      FTLCONF_webserver_api_password: 'TheBoss123?com'
+      FTLCONF_dns_listeningMode: 'ALL'
+      FTLCONF_dns_upstreams: '172.30.0.3#5335'
+    volumes:
+      - './etc-pihole:/etc/pihole'
+      - './etc-dnsmasq.d:/etc/dnsmasq.d'
     ports:
       - "53:53/tcp"
       - "53:53/udp"
-      - "80:80/tcp"
-      - "443:443/tcp"
-    environment:
-      TZ: 'America/New_York'
-      WEBPASSWORD: 'TheBoss123?com'
-      DNSMASQ_LISTENING: 'all'
-      DNS1: '172.18.0.2#5335'   # Unbound container
-      DNS2: '127.0.0.1'
-    volumes:
-      - ./etc-pihole:/etc/pihole
-      - ./etc-dnsmasq.d:/etc/dnsmasq.d
+      - "8000:80/tcp"
+      - "4430:443/tcp"
     cap_add:
       - NET_ADMIN
       - SYS_NICE
+    restart: unless-stopped
+    networks:
+      pihole_net:
+        ipv4_address: 172.30.0.2
+
+  unbound:
+    container_name: unbound
+    image: mvance/unbound:latest
+    volumes:
+      - './unbound:/etc/unbound'
+    restart: unless-stopped
+    networks:
+      pihole_net:
+        ipv4_address: 172.30.0.3
 
 networks:
   pihole_net:
@@ -42,4 +41,4 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.18.0.0/16
+        - subnet: 172.30.0.0/16
