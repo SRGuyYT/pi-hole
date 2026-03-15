@@ -1,36 +1,45 @@
-version: '3.8'
-
 services:
+  unbound:
+    container_name: unbound
+    image: mvance/unbound:latest
+    restart: unless-stopped
+    networks:
+      pihole_net:
+        ipv4_address: 172.18.0.2
+    volumes:
+      - ./unbound/unbound.conf:/opt/unbound/etc/unbound/unbound.conf:ro
+
   pihole:
     container_name: pihole
     image: pihole/pihole:latest
+    depends_on:
+      - unbound
+    restart: unless-stopped
+    networks:
+      pihole_net:
+        ipv4_address: 172.18.0.3
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"
+      - "443:443/tcp"
     environment:
       TZ: 'America/New_York'
       WEBPASSWORD: 'TheBoss123?com'
       DNSMASQ_LISTENING: 'all'
-      DNS_FQDN_REQUIRED: 'true'
-      DNS_BOGUS_PRIV: 'true'
-      DNSSEC: 'true'
-      ServerIP: '192.168.1.133'   # replace with your host IP
-      DNS1: 'unbound#5335'        # use Unbound container
-      DNS2: 'unbound#5335'
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "8000:80/tcp"
+      DNS1: '172.18.0.2#5335'   # Unbound container
+      DNS2: '127.0.0.1'
     volumes:
-      - './etc-pihole:/etc/pihole'
-      - './etc-dnsmasq.d:/etc/dnsmasq.d'
-    depends_on:
-      - unbound
-    restart: unless-stopped
+      - ./etc-pihole:/etc/pihole
+      - ./etc-dnsmasq.d:/etc/dnsmasq.d
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
 
-  unbound:
-    container_name: unbound
-    image: mvance/unbound:latest
-    ports:
-      - "5335:5335/tcp"
-      - "5335:5335/udp"
-    volumes:
-      - './unbound:/opt/unbound/etc/unbound'
-    restart: unless-stopped
+networks:
+  pihole_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.18.0.0/16
