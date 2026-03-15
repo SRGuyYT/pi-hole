@@ -1,0 +1,25 @@
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "8000:80/tcp"
+      - "9000:443/tcp"
+
+    environment:
+      TZ: 'America/New_York'
+      FTLCONF_webserver_api_password: 'TheBoss123?com'
+      FTLCONF_dns_listeningMode: 'ALL'
+      FTLCONF_dns_upstreams: '1.1.1.1;1.0.0.1'
+
+    volumes:
+      - './etc-pihole:/etc/pihole'
+
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
+
+    restart: unless-stopped
