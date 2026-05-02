@@ -1,9 +1,9 @@
-name = "grubx-api-proxy"
+name = "pro-url-grubx"
 main = "src/index.js"
 compatibility_date = "2026-05-01"
 
 routes = [
-  { pattern = "pro.url.sky0cloud.dpdns.org/*", custom_domain = true }
+  { pattern = "pro.url.sky0cloud.dpdns.org", custom_domain = true }
 ]
 
 [vars]
